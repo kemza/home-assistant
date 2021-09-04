@@ -1,0 +1,67 @@
+blueprint:
+  name: Temperature Management
+  description: Turn a switch on and off based on the difference between outdoor and indoor temperature, toggle an input_boolean
+  domain: automation
+  input:
+    indoor_temperature_sensor:
+        name: Indoor Temperature Sensor
+        description: A sensor that measures the indoor temperature
+        selector:
+          entity:
+            domain: climate
+    reference_temperature:
+        name: Reference Temperature
+        description: A temperature value that indicates the outdoor temperature if there is no reference sensor available
+        default: 0
+    outdoor_temperature_sensor:
+        name: Outdoor temperature Sensor
+        description: A sensor that indicates the outdoor temperature
+        selector:
+          entity:
+            domain: climate
+        default: []
+    binary_switch:
+        name: Binary Switch
+        description: A switch that turns on and off
+        selector:
+          entity:
+            domain: input_boolean
+    rising_threshold:
+        name: Rising Threshold
+        description: How many degrees above outdoor temperature can rise before the switch is turned on
+        selector:
+          number:
+            min: 0
+            max: 20
+        default: 1
+    falling_threshold:
+        name: Falling Threshold
+        description: How many degrees above outdoor temperature  must fall to before the switch is turned off
+        selector:
+          number:
+            min: 0
+            max: 20
+        default: 1
+    
+trigger:
+  - entity_id: !input indoor_temperature_sensor
+    platform: state
+  - entity_id: !input outdoor_temperature_sensor
+    platform: state
+condition:
+  - condition: template
+    value_template: '{{ mode != switch_state }}'
+action:
+  - service: input_boolean.turn_{{mode}}
+    entity_id: !input binary_switch
+variables:
+    reference_temperature: !input reference_temperature
+    indoor_temperature_sensor: !input indoor_temperature_sensor
+    outdoor_temperature_sensor: !input outdoor_temperature_sensor
+    binary_switch: !input binary_switch
+    switch_state: '{{ states(binary_switch) }}'
+    rising_threshold: !input rising_threshold
+    falling_threshold: !input falling_threshold
+    difference: '{{ (states(outdoor_temperature_sensor)|float or reference_temperature|float) - states(indoor_temperature_sensor)|float}}'
+    mode: '{% if switch_state == ''off'' and difference|float > rising_threshold|float %}on{% elif switch_state == ''on'' and difference|float > falling_threshold|float %}on{% else %}off{% endif %}'
+mode: single
