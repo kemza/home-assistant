@@ -37,5 +37,6 @@ trigger:
 action:
   - service: notify.notify_device
     data:
-      message: "Message body"
-      title: "Message title"
+      title: '{{ notification_title }}'
+      message: '{{ notification_message }}'
+      
