@@ -35,8 +35,9 @@ trigger:
     entity_id: !input car_location
     
 action:
-  - service: notify.notify_device
-    data:
-      title: '{{ notification_title }}'
-      message: '{{ notification_message }}'
+  domain: mobile_app
+  type: notify
+  device_id: !input "notify_device"
+  title: !input "notification_title"
+  message: !input "notification_message"
       
